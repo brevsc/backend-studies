@@ -1,0 +1,1 @@
+This repo contains files from my backend with node.js studies, as I aim to finally grow up and learn some new things to get good.
