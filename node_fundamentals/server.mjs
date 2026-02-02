@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { router } from "./router.mjs";
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost/3000");
@@ -9,31 +10,17 @@ const server = createServer(async (req, res) => {
     chunks.push(chunk);
   }
   const body = Buffer.concat(chunks).toString("utf-8");
-
-  switch (`${req.method} ${url.pathname}`) {
-    case "GET /":
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.end(`
-        <html>
-          <head>
-            <title>Mundo</title>
-          </head>
-          <body>
-            <h1>Hello, world!</h1>
-          </body>
-        </html>
-        `);
-      break;
-    case "POST /products":
-      res.statusCode = 201;
-      res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify({name: 'test'}));
-      break;
-    default:
-      res.statusCode = 404;
+  const handler = router[req.method][url.pathname];
+  const routesHandler = () => {
+    if (handler) {
+      handler(req, res);
+    } else {
+      res.statusCode = 400;
       res.end("NOT FOUND");
-  }
+    }
+  };
+
+  routesHandler();
 });
 
 server.listen(3000, () => {
