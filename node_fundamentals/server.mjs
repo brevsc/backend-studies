@@ -1,5 +1,19 @@
 import { createServer } from "node:http";
-import { router } from "./router.mjs";
+import { Router } from "./router.mjs";
+
+const router = new Router();
+
+router.get("/", (req, res) => {
+  res.end("Home");
+});
+
+router.get("/products/notebook", (req, res) => {
+  res.end("Products - Notebook");
+});
+
+router.post("/products", (req, res) => {
+  res.end("Products");
+});
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost/3000");
@@ -10,17 +24,14 @@ const server = createServer(async (req, res) => {
     chunks.push(chunk);
   }
   const body = Buffer.concat(chunks).toString("utf-8");
-  const handler = router[req.method][url.pathname];
-  const routesHandler = () => {
-    if (handler) {
-      handler(req, res);
-    } else {
-      res.statusCode = 400;
-      res.end("NOT FOUND");
-    }
-  };
+  const handler = router.find(req.method, url.pathname);
 
-  routesHandler();
+  if (handler) {
+    handler(req, res);
+  } else {
+    res.statusCode = 400;
+    res.end("NOT FOUND");
+  }
 });
 
 server.listen(3000, () => {
