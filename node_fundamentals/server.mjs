@@ -1,36 +1,35 @@
 import { createServer } from "node:http";
 import { Router } from "./router.mjs";
+import { customRequest } from "./custom-request.mjs";
+import { customResponse } from "./custom-response.mjs";
 
 const router = new Router();
 
 router.get("/", (req, res) => {
-  res.end("Home");
+  res.status(200).end("Home");
 });
 
 router.get("/products/notebook", (req, res) => {
-  res.end("Products - Notebook");
+  res.status(200).end("Products - Notebook");
 });
 
-router.post("/products", (req, res) => {
-  res.end("Products");
-});
+function postProduct(req, res) {
+  const color = req.query.get('color');
+  res.status(201).json({ product: 'Notebook', color });
+}
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url, "http://localhost/3000");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+router.post('/products', postProduct);
 
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
-  }
-  const body = Buffer.concat(chunks).toString("utf-8");
-  const handler = router.find(req.method, url.pathname);
+const server = createServer(async (request, response) => {
+  const req = await customRequest(request);
+  const res = customResponse(response);
+
+  const handler = router.find(req.method, req.pathname);
 
   if (handler) {
     handler(req, res);
   } else {
-    res.statusCode = 400;
-    res.end("NOT FOUND");
+    res.status(404).end("NOT FOUND");
   }
 });
 
